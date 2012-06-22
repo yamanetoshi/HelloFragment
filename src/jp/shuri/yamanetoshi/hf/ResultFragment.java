@@ -1,6 +1,5 @@
 package jp.shuri.yamanetoshi.hf;
 
-import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -14,39 +13,33 @@ import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.http.protocol.HTTP;
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 
-import android.app.ProgressDialog;
-import android.content.Context;
+import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.support.v4.app.Fragment;
 import android.support.v4.app.ListFragment;
 import android.text.TextUtils;
 import android.util.Xml;
-import android.view.LayoutInflater;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
+import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
 public class ResultFragment extends ListFragment {
 	
-	private TextView mTextView;
-	
 	@Override
 	public void onActivityCreated(Bundle savedInstanceState) {
-		ArrayAdapter<String> adapter = new ArrayAdapter<String>(getActivity(), 
+		ArrayAdapter<AtndData> adapter = new ArrayAdapter<AtndData>(getActivity(), 
 				android.R.layout.simple_list_item_1);
 		setListAdapter(adapter);
 		super.onActivityCreated(savedInstanceState);
 	}
 
 	public void searchEvents(String query) {
-		AsyncTask<String, Void, List<String>> task = new AsyncTask<String, Void, List<String>>() {
+		AsyncTask<String, Void, List<AtndData>> task = new AsyncTask<String, Void, List<AtndData>>() {
 			private static final String ERROR = "can not search";
 			
 			@Override
@@ -56,7 +49,10 @@ public class ResultFragment extends ListFragment {
 			}
 			
 			@Override
-			protected List<String> doInBackground(String... params) {
+			protected List<AtndData> doInBackground(String... params) {
+				
+				List<AtndData> atndList = new ArrayList<AtndData>();
+				
 				if (params.length < 1)
 					return null;
 				if (TextUtils.isEmpty(params[0]))
@@ -76,7 +72,7 @@ public class ResultFragment extends ListFragment {
 						HttpEntity httpEntity = httpResponse.getEntity();
 						InputStream in = httpEntity.getContent();
 						
-						ArrayList<String> data = parseXml(in);
+						ArrayList<AtndData> data = parseXml(in);
 						hg.abort();
 
 						return data;				
@@ -97,8 +93,8 @@ public class ResultFragment extends ListFragment {
 				}
 			}
 			
-			private ArrayList<String> parseXml(InputStream in) throws XmlPullParserException, IOException {
-				ArrayList<String> titleList = new ArrayList<String>();
+			private ArrayList<AtndData> parseXml(InputStream in) throws XmlPullParserException, IOException {
+				ArrayList<AtndData> atndList = new ArrayList<AtndData>();
 				
 				final XmlPullParser parser = Xml.newPullParser();
 				parser.setInput(new InputStreamReader(in));
@@ -119,11 +115,15 @@ public class ResultFragment extends ListFragment {
 					tagName = parser.getName();
 			
 					if (tagName.equals("event")) {
+						
+						AtndData atnd = new AtndData();
+						
 						while (true) {
 							eventType = parser.next();
 							tagName = parser.getName();
 			
 							if (eventType == XmlPullParser.END_TAG && tagName.equals("event")) {
+								atndList.add(atnd);
 								break;
 							}
 			
@@ -131,23 +131,46 @@ public class ResultFragment extends ListFragment {
 								continue;
 			
 							if (tagName.equals("title")) {
-								titleList.add(parser.nextText());
-								break;
+								atnd.title = parser.nextText();
+								continue;
+							} else if(tagName.equals("description")) {
+								atnd.description = parser.nextText();
+								continue;
+							} else if(tagName.equals("eventUrl")) {
+								atnd.eventUrl = parser.nextText();
+								continue;
+							} else if(tagName.equals("startedAt")) {
+								atnd.startedAt = parser.nextText();
+								continue;
+							} else if(tagName.equals("endedAt")) {
+								atnd.endedAt = parser.nextText();
+								continue;
+							} else if(tagName.equals("url")) {
+								atnd.url = parser.nextText();
+								continue;
+							} else if(tagName.equals("limit")) {
+								atnd.limit = parser.nextText();
+								continue;
+							} else if(tagName.equals("address")) {
+								atnd.address = parser.nextText();
+								continue;
+							} else if(tagName.equals("place")) {
+								atnd.place = parser.nextText();
+								continue;
 							}
 						}
 					}
 				}
 				in.close();
 			
-				return titleList;
+				return atndList;
 			}
 			
-			@Override
-			protected void onPostExecute(List<String> result) {
+			protected void onPostExecute(List<AtndData> result) {
 				setListShown(true);
 
 				if(result != null) {
-					ArrayAdapter<String> adapter = new ArrayAdapter<String>(getActivity(), android.R.layout.simple_list_item_1, result);
+					ArrayAdapter<AtndData> adapter = new ArrayAdapter<AtndData>(getActivity(), android.R.layout.simple_list_item_1, result);
 					setListAdapter(adapter);
 				} else {
 					Toast.makeText(getActivity(), ERROR, Toast.LENGTH_SHORT).show();
@@ -158,4 +181,16 @@ public class ResultFragment extends ListFragment {
 		};
 		task.execute(query);
 	}
+
+	@Override
+	public void onListItemClick(ListView l, View v, int position, long id) {
+		super.onListItemClick(l, v, position, id);
+		
+		AtndData data = (AtndData) l.getAdapter().getItem(position);
+		
+		Intent intent = new Intent(getActivity(), DetailActivity.class);
+		intent.putExtra("data", data);
+		startActivity(intent);
+	}
+	
 }

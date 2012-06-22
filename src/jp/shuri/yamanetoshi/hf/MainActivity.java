@@ -2,11 +2,11 @@ package jp.shuri.yamanetoshi.hf;
 
 import java.net.URLEncoder;
 
-import android.app.Activity;
-import android.content.Intent;
 import android.os.Bundle;
+import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentTransaction;
 import android.text.TextUtils;
 import android.view.View;
 import android.widget.Button;
@@ -30,9 +30,16 @@ public class MainActivity extends FragmentActivity {
 
 			@Override
 			public void onAtndListSelected(AtndData data) {
-				Intent intent = new Intent(MainActivity.this, DetailActivity.class);
-				intent.putExtra("data", data);
-				startActivity(intent);
+				FragmentManager manager = getSupportFragmentManager();
+				FragmentTransaction ft = manager.beginTransaction();
+				Fragment prev = manager.findFragmentByTag("dialog");
+				if (prev != null) {
+					ft.remove(prev);
+				}
+				ft.addToBackStack(null);
+				
+				DetailDialogFragment dialogFragment = DetailDialogFragment.newInstance(data);
+				dialogFragment.show(manager, "dialog");
 			}
         	
         });

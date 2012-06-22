@@ -33,37 +33,34 @@ import android.widget.ArrayAdapter;
 import android.widget.TextView;
 import android.widget.Toast;
 
-public class ResultFragment extends Fragment {
+public class ResultFragment extends ListFragment {
 	
 	private TextView mTextView;
 	
 	@Override
-	public View onCreateView(LayoutInflater inflater, ViewGroup container,
-			Bundle savedInstanceState) {
-		View v = inflater.inflate(R.layout.result, container, false);
-		mTextView = (TextView) v.findViewById(R.id.result);
-		return v;
+	public void onActivityCreated(Bundle savedInstanceState) {
+		ArrayAdapter<String> adapter = new ArrayAdapter<String>(getActivity(), 
+				android.R.layout.simple_list_item_1);
+		setListAdapter(adapter);
+		super.onActivityCreated(savedInstanceState);
 	}
 
 	public void searchEvents(String query) {
-		AsyncTask<String, Void, String> task = new AsyncTask<String, Void, String>() {
+		AsyncTask<String, Void, List<String>> task = new AsyncTask<String, Void, List<String>>() {
 			private static final String ERROR = "can not search";
-			private ProgressDialog mDialog;
 			
 			@Override
 			protected void onPreExecute() {
-				mDialog = new ProgressDialog(getActivity());
-				mDialog.setMessage("Searching...");
-				mDialog.show();
+				setListShown(false);
 				super.onPreExecute();
 			}
 			
 			@Override
-			protected String doInBackground(String... params) {
+			protected List<String> doInBackground(String... params) {
 				if (params.length < 1)
-					return ERROR;
+					return null;
 				if (TextUtils.isEmpty(params[0]))
-					return ERROR;
+					return null;
 				
 				String url = params[0];
 				
@@ -79,36 +76,83 @@ public class ResultFragment extends Fragment {
 						HttpEntity httpEntity = httpResponse.getEntity();
 						InputStream in = httpEntity.getContent();
 						
-						BufferedReader br = new BufferedReader(new InputStreamReader(in, HTTP.UTF_8), 8);
-						String line;
-						while ((line = br.readLine()) != null) {
-							sb.append(line + "\n");
-						}
-						in.close();
+						ArrayList<String> data = parseXml(in);
 						hg.abort();
 
-						return sb.toString();				
+						return data;				
 					} else {
 						hg.abort();
-						return ERROR;
+						return null;
 					}
+				} catch (XmlPullParserException e) {
+					return null;
 				} catch (ClientProtocolException e) {
-					return ERROR;
+					return null;
 				} catch (IOException e) {
-					return ERROR;
+					return null;
+				} catch (IllegalArgumentException e) {
+					return null;
 				} catch (NullPointerException e) {
-					return ERROR;
+					return null;
 				}
 			}
 			
-			@Override
-			protected void onPostExecute(String result) {
-				if (mDialog != null)
-					mDialog.dismiss();
+			private ArrayList<String> parseXml(InputStream in) throws XmlPullParserException, IOException {
+				ArrayList<String> titleList = new ArrayList<String>();
 				
-				if (mTextView != null) {
-					mTextView.setText(result);
+				final XmlPullParser parser = Xml.newPullParser();
+				parser.setInput(new InputStreamReader(in));
+				
+				String tagName;
+				int eventType;
+				
+				// parse XML
+				while (true) {
+					eventType = parser.next();
+			
+					if (eventType == XmlPullParser.END_DOCUMENT)
+						break;
+			
+					if (eventType != XmlPullParser.START_TAG)
+						continue;
+			
+					tagName = parser.getName();
+			
+					if (tagName.equals("event")) {
+						while (true) {
+							eventType = parser.next();
+							tagName = parser.getName();
+			
+							if (eventType == XmlPullParser.END_TAG && tagName.equals("event")) {
+								break;
+							}
+			
+							if (eventType != XmlPullParser.START_TAG)
+								continue;
+			
+							if (tagName.equals("title")) {
+								titleList.add(parser.nextText());
+								break;
+							}
+						}
+					}
 				}
+				in.close();
+			
+				return titleList;
+			}
+			
+			@Override
+			protected void onPostExecute(List<String> result) {
+				setListShown(true);
+
+				if(result != null) {
+					ArrayAdapter<String> adapter = new ArrayAdapter<String>(getActivity(), android.R.layout.simple_list_item_1, result);
+					setListAdapter(adapter);
+				} else {
+					Toast.makeText(getActivity(), ERROR, Toast.LENGTH_SHORT).show();
+				}
+				
 				super.onPostExecute(result);
 			}
 		};

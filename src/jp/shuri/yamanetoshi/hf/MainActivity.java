@@ -24,6 +24,19 @@ public class MainActivity extends FragmentActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
         
+        FragmentManager manager = getSupportFragmentManager();
+        final ResultFragment fragment = (ResultFragment)manager.findFragmentById(R.id.result_fragment);
+        fragment.setOnAtndListSelected(new ResultFragment.OnAtndListSelectedListener() {
+
+			@Override
+			public void onAtndListSelected(AtndData data) {
+				Intent intent = new Intent(MainActivity.this, DetailActivity.class);
+				intent.putExtra("data", data);
+				startActivity(intent);
+			}
+        	
+        });
+        
         mSearchBtn = (Button)findViewById(R.id.search_btn);
         mEditText = (EditText)findViewById(R.id.keyword);
         

@@ -181,6 +181,15 @@ public class ResultFragment extends ListFragment {
 		};
 		task.execute(query);
 	}
+	
+	private OnAtndListSelectedListener mOnAtndListSelectedListener;
+	public interface OnAtndListSelectedListener {
+		public void onAtndListSelected(AtndData data);
+	}
+	
+	public void setOnAtndListSelected(OnAtndListSelectedListener l) {
+		mOnAtndListSelectedListener = l;
+	}
 
 	@Override
 	public void onListItemClick(ListView l, View v, int position, long id) {
@@ -188,9 +197,9 @@ public class ResultFragment extends ListFragment {
 		
 		AtndData data = (AtndData) l.getAdapter().getItem(position);
 		
-		Intent intent = new Intent(getActivity(), DetailActivity.class);
-		intent.putExtra("data", data);
-		startActivity(intent);
+		if(mOnAtndListSelectedListener != null) {
+			mOnAtndListSelectedListener.onAtndListSelected(data);
+		}
 	}
 	
 }

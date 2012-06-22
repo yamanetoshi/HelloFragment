@@ -1,14 +1,20 @@
 package jp.shuri.yamanetoshi.hf;
 
+import java.net.URLEncoder;
+
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
+import android.support.v4.app.FragmentActivity;
+import android.support.v4.app.FragmentManager;
 import android.text.TextUtils;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 
-public class MainActivity extends Activity {
+public class MainActivity extends FragmentActivity {
+	private static final String ATND_SEARCH_QUERY = "http://api.atnd.org/events/?keyword=";
+	
 	private Button mSearchBtn;
 	private EditText mEditText;
 	
@@ -27,9 +33,9 @@ public class MainActivity extends Activity {
 			public void onClick(View v) {
 				String keyword = mEditText.getText().toString();
 				if(!TextUtils.isEmpty(keyword)) {
-					Intent intent = new Intent(MainActivity.this, ResultActivity.class);
-					intent.putExtra(Intent.EXTRA_TEXT, keyword);
-					startActivity(intent);
+					FragmentManager manager = getSupportFragmentManager();
+					ResultFragment fragment = (ResultFragment)manager.findFragmentById(R.id.result_fragment);
+					fragment.searchEvents(ATND_SEARCH_QUERY +URLEncoder.encode(keyword));
 				}
 			}
 		});

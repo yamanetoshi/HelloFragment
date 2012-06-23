@@ -2,6 +2,7 @@ package jp.shuri.yamanetoshi.hf;
 
 import java.net.URLEncoder;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
@@ -25,6 +26,7 @@ public class MainActivity extends FragmentActivity {
         setContentView(R.layout.main);
         
         FragmentManager manager = getSupportFragmentManager();
+        
         final ResultFragment fragment = (ResultFragment)manager.findFragmentById(R.id.result_fragment);
         fragment.setOnAtndListSelected(new ResultFragment.OnAtndListSelectedListener() {
 
@@ -32,14 +34,30 @@ public class MainActivity extends FragmentActivity {
 			public void onAtndListSelected(AtndData data) {
 				FragmentManager manager = getSupportFragmentManager();
 				FragmentTransaction ft = manager.beginTransaction();
-				Fragment prev = manager.findFragmentByTag("dialog");
-				if (prev != null) {
-					ft.remove(prev);
-				}
-				ft.addToBackStack(null);
 				
-				DetailDialogFragment dialogFragment = DetailDialogFragment.newInstance(data);
-				dialogFragment.show(manager, "dialog");
+				View v = findViewById(R.id.detail_fragment_container);
+				
+				if(v != null) {
+					// Horizontal
+					DetailFragment detailFragment = DetailFragment.newInstance(data);
+					ft.replace(R.id.detail_fragment_container, detailFragment);
+					ft.commit();
+				} else {
+					// Vertical
+					Intent intent = new Intent(MainActivity.this,DetailActivity.class);
+					intent.putExtra("data", data);
+					startActivity(intent);
+					/*
+					Fragment prev = manager.findFragmentByTag("dialog");
+					if (prev != null) {
+						ft.remove(prev);
+					}
+					ft.addToBackStack(null);
+				
+					DetailDialogFragment dialogFragment = DetailDialogFragment.newInstance(data);
+					dialogFragment.show(manager, "dialog");
+					*/
+				}
 			}
         	
         });

@@ -29,7 +29,8 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 public class ResultFragment extends ListFragment {
-	
+
+	private int mCurrentPosition = -1;
 	private ArrayList<AtndData> mDataList;
 	
 	@Override
@@ -37,6 +38,7 @@ public class ResultFragment extends ListFragment {
 		
 		if(savedInstanceState != null) {
 			mDataList = savedInstanceState.getParcelableArrayList("data");
+			mCurrentPosition = savedInstanceState.getInt("index");
 		}
 		if(mDataList == null) {
 			mDataList = new ArrayList<AtndData>();
@@ -46,12 +48,18 @@ public class ResultFragment extends ListFragment {
 				android.R.layout.simple_list_item_1,
 				mDataList);
 		setListAdapter(adapter);
+		
+		if(mCurrentPosition != -1) {
+			listItemClick(mCurrentPosition);
+		}
+		
 		super.onActivityCreated(savedInstanceState);
 	}
 
 	@Override
 	public void onSaveInstanceState(Bundle outState) {
 		outState.putParcelableArrayList("data", mDataList);
+		outState.putInt("index", mCurrentPosition);
 		super.onSaveInstanceState(outState);
 	}
 
@@ -212,8 +220,20 @@ public class ResultFragment extends ListFragment {
 	@Override
 	public void onListItemClick(ListView l, View v, int position, long id) {
 		super.onListItemClick(l, v, position, id);
-		
+		listItemClick(position);
+		/*
 		AtndData data = (AtndData) l.getAdapter().getItem(position);
+		
+		if(mOnAtndListSelectedListener != null) {
+			mOnAtndListSelectedListener.onAtndListSelected(data);
+		}
+		*/
+	}
+	
+	private void listItemClick(int position) {
+		mCurrentPosition = position;
+		
+		AtndData data = (AtndData)getListView().getAdapter().getItem(position);
 		
 		if(mOnAtndListSelectedListener != null) {
 			mOnAtndListSelectedListener.onAtndListSelected(data);

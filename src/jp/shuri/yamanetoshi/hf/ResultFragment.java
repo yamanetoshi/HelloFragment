@@ -30,12 +30,29 @@ import android.widget.Toast;
 
 public class ResultFragment extends ListFragment {
 	
+	private ArrayList<AtndData> mDataList;
+	
 	@Override
 	public void onActivityCreated(Bundle savedInstanceState) {
+		
+		if(savedInstanceState != null) {
+			mDataList = savedInstanceState.getParcelableArrayList("data");
+		}
+		if(mDataList == null) {
+			mDataList = new ArrayList<AtndData>();
+		}
+		
 		ArrayAdapter<AtndData> adapter = new ArrayAdapter<AtndData>(getActivity(), 
-				android.R.layout.simple_list_item_1);
+				android.R.layout.simple_list_item_1,
+				mDataList);
 		setListAdapter(adapter);
 		super.onActivityCreated(savedInstanceState);
+	}
+
+	@Override
+	public void onSaveInstanceState(Bundle outState) {
+		outState.putParcelableArrayList("data", mDataList);
+		super.onSaveInstanceState(outState);
 	}
 
 	public void searchEvents(String query) {
@@ -170,6 +187,7 @@ public class ResultFragment extends ListFragment {
 				setListShown(true);
 
 				if(result != null) {
+					mDataList = (ArrayList<AtndData>)result;
 					ArrayAdapter<AtndData> adapter = new ArrayAdapter<AtndData>(getActivity(), android.R.layout.simple_list_item_1, result);
 					setListAdapter(adapter);
 				} else {
